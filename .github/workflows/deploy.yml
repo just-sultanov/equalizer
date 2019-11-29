@@ -27,6 +27,8 @@ jobs:
     steps:
       - name: Git checkout
         uses: actions/checkout@v1
+        with:
+          ref: master
 
       - name: Setup java
         uses: actions/setup-java@v1
@@ -53,9 +55,6 @@ jobs:
         run: make test
 
       - name: Upload coverage
-        uses: actions/checkout@v1
-        with:
-          ref: master
         run: curl -s https://codecov.io/bash | bash -s -- -c -F aFlag -f ./target/coverage/codecov.json
 
 
