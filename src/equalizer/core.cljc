@@ -84,13 +84,13 @@
     (let [actual-type    (get-type actual)
           predicate-type (get-type predicate)]
       (cond
-        (simple-type? predicate-type) ::default
+        (simple-type? predicate-type) ::equality
         (sequential-type? predicate-type) ::sequential
         (function-type? predicate-type) ::function
         :else [actual-type predicate-type]))))
 
 
-(defmethod compare ::default
+(defmethod compare ::equality
   [actual predicate]
   (if-not (= actual predicate)
     (fail actual predicate)
