@@ -11,6 +11,20 @@
   (contains? simple-types x))
 
 
+(def function-types
+  #{::function})
+
+(defn function-type? [x]
+  (contains? function-types x))
+
+
+(def sequential-types
+  #{::list ::vector})
+
+(defn sequential-type? [x]
+  (contains? sequential-types x))
+
+
 
 (defn fail [actual predicate]
   {:actual actual :expected predicate})
@@ -20,6 +34,7 @@
 
 (defn fail? [x]
   (some? x))
+
 
 
 (defn get-type [x]
@@ -41,13 +56,30 @@
 
 
 
+(declare compare)
+
+(defn compare-all [actual predicates]
+  (->> predicates
+    (map-indexed
+      (fn [idx predicate]
+        [idx predicate]))
+    (reduce
+      (fn [errors [idx predicate]]
+        (if-some [error (compare actual predicate)]
+          (conj errors (assoc error :path [idx]))
+          errors))
+      [])))
+
+
+
 (defmulti compare
   (fn [actual predicate]
     (let [actual-type    (get-type actual)
           predicate-type (get-type predicate)]
       (cond
-        (= ::function predicate-type) ::function
         (simple-type? predicate-type) ::default
+        (sequential-type? predicate-type) ::sequential
+        (function-type? predicate-type) ::function
         :else [actual-type predicate-type]))))
 
 
@@ -60,7 +92,14 @@
 (defmethod compare ::function
   [actual predicate]
   (when-not (and (boolean (predicate actual)) true)
-    (fail actual predicate)))
+    (fail actual `(~'not ~actual))))
+
+
+(defmethod compare ::sequential
+  [actual predicates]
+  (let [errors (compare-all actual predicates)]
+    (when (seq errors)
+      errors)))
 
 
 (defmethod compare [::string ::regexp]
