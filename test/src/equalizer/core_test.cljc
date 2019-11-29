@@ -76,10 +76,10 @@
         (is (sut/fail? (sut/compare nil some?))))
 
       (testing "[::nil ::sequential]"
-        (is (sut/pass? (sut/compare nil (list nil nil?))))
-        (is (sut/fail? (sut/compare nil (list nil some?))))
-        (is (sut/pass? (sut/compare nil (vector nil nil?))))
-        (is (sut/fail? (sut/compare nil (vector nil some?)))))
+        (is (every? sut/pass? (sut/compare nil (list nil nil?))))
+        (is (some sut/fail? (sut/compare nil (list nil some?))))
+        (is (every? sut/pass? (sut/compare nil (vector nil nil?))))
+        (is (some sut/fail? (sut/compare nil (vector nil some?)))))
 
       (testing "[::nil _]"
         (is (->> [1 1.0 #?(:clj 1/2) true false \a "abc" 'a 'a/b :a :a/b]
@@ -102,14 +102,14 @@
         (is (sut/fail? (sut/compare false true?))))
 
       (testing "[::boolean ::sequential]"
-        (is (sut/pass? (sut/compare true (list true true? boolean?))))
-        (is (sut/pass? (sut/compare false (list false false? boolean?))))
-        (is (sut/pass? (sut/compare true (vector true true? boolean?))))
-        (is (sut/pass? (sut/compare false (vector false false? boolean?))))
-        (is (sut/fail? (sut/compare true (list true false? boolean?))))
-        (is (sut/fail? (sut/compare false (list false true? boolean?))))
-        (is (sut/fail? (sut/compare true (vector true false? boolean?))))
-        (is (sut/fail? (sut/compare false (vector false true? boolean?)))))
+        (is (every? sut/pass? (sut/compare true (list true true? boolean?))))
+        (is (every? sut/pass? (sut/compare false (list false false? boolean?))))
+        (is (every? sut/pass? (sut/compare true (vector true true? boolean?))))
+        (is (every? sut/pass? (sut/compare false (vector false false? boolean?))))
+        (is (some sut/fail? (sut/compare true (list true false? boolean?))))
+        (is (some sut/fail? (sut/compare false (list false true? boolean?))))
+        (is (some sut/fail? (sut/compare true (vector true false? boolean?))))
+        (is (some sut/fail? (sut/compare false (vector false true? boolean?)))))
 
       (testing "[::boolean _]"
         (is (->> [nil 1 1.0 #?(:clj 1/2) \a "abc" 'a 'a/b :a :a/b]
@@ -136,18 +136,18 @@
         #?(:clj (is (sut/fail? (sut/compare 1/2 neg?)))))
 
       (testing "[::number ::sequential]"
-        (is (sut/pass? (sut/compare 1 (list 1 pos-int?))))
-        (is (sut/pass? (sut/compare 0 (list 0 zero?))))
-        (is (sut/pass? (sut/compare 1.0 (list 1.0 pos?))))
-        #?(:clj (is (sut/pass? (sut/compare 1/2 (list 1/2 ratio?)))))
-        (is (sut/fail? (sut/compare 1 (list 1 neg-int?))))
-        #?(:clj (is (sut/fail? (sut/compare 1/2 (list 1/2 neg?)))))
-        (is (sut/pass? (sut/compare 1 (vector 1 pos-int?))))
-        (is (sut/pass? (sut/compare 0 (vector 0 zero?))))
-        (is (sut/pass? (sut/compare 1.0 (vector 1.0 pos?))))
-        #?(:clj (is (sut/pass? (sut/compare 1/2 (vector 1/2 ratio?)))))
-        (is (sut/fail? (sut/compare 1 (vector 1 neg-int?))))
-        #?(:clj (is (sut/fail? (sut/compare 1/2 (vector 1/2 neg?))))))
+        (is (every? sut/pass? (sut/compare 1 (list 1 pos-int?))))
+        (is (every? sut/pass? (sut/compare 0 (list 0 zero?))))
+        (is (every? sut/pass? (sut/compare 1.0 (list 1.0 pos?))))
+        #?(:clj (is (every? sut/pass? (sut/compare 1/2 (list 1/2 ratio?)))))
+        (is (some sut/fail? (sut/compare 1 (list 1 neg-int?))))
+        #?(:clj (is (some sut/fail? (sut/compare 1/2 (list 1/2 neg?)))))
+        (is (every? sut/pass? (sut/compare 1 (vector 1 pos-int?))))
+        (is (every? sut/pass? (sut/compare 0 (vector 0 zero?))))
+        (is (every? sut/pass? (sut/compare 1.0 (vector 1.0 pos?))))
+        #?(:clj (is (every? sut/pass? (sut/compare 1/2 (vector 1/2 ratio?)))))
+        (is (some sut/fail? (sut/compare 1 (vector 1 neg-int?))))
+        #?(:clj (is (some sut/fail? (sut/compare 1/2 (vector 1/2 neg?))))))
 
       (testing "[::number _]"
         (is (->> [nil #?(:clj 1/2) \a "abc" 'a 'a/b :a :a/b]
@@ -164,10 +164,10 @@
         #?(:clj (is (sut/fail? (sut/compare \a string?)))))
 
       (testing "[::char ::sequential]"
-        (is (sut/pass? (sut/compare \a (list \a char?))))
-        (is (sut/fail? (sut/compare \a (list \a nil?))))
-        (is (sut/pass? (sut/compare \a (vector \a char?))))
-        (is (sut/fail? (sut/compare \a (vector \a nil?)))))
+        (is (every? sut/pass? (sut/compare \a (list \a char?))))
+        (is (some sut/fail? (sut/compare \a (list \a nil?))))
+        (is (every? sut/pass? (sut/compare \a (vector \a char?))))
+        (is (some sut/fail? (sut/compare \a (vector \a nil?)))))
 
       (testing "[::char _]"
         (is (->> [nil 1 1.0 #?(:clj 1/2) true false "abc" 'a 'a/b :a :a/b]
@@ -188,10 +188,10 @@
         (is (sut/fail? (sut/compare "abc" char?))))
 
       (testing "[::char ::sequential]"
-        (is (sut/pass? (sut/compare "abc" (list "abc" string?))))
-        (is (sut/fail? (sut/compare "abc" (list "abc" nil?))))
-        (is (sut/pass? (sut/compare "abc" (vector "abc" string?))))
-        (is (sut/fail? (sut/compare "abc" (vector "abc" nil?)))))
+        (is (every? sut/pass? (sut/compare "abc" (list "abc" string?))))
+        (is (some sut/fail? (sut/compare "abc" (list "abc" nil?))))
+        (is (every? sut/pass? (sut/compare "abc" (vector "abc" string?))))
+        (is (some sut/fail? (sut/compare "abc" (vector "abc" nil?)))))
 
       (testing "[::string _]"
         (is (->> [nil 1 1.0 #?(:clj 1/2) true false \a 'a 'a/b :a :a/b]
@@ -211,10 +211,10 @@
         (is (sut/fail? (sut/compare 'a/b simple-symbol?))))
 
       (testing "[::symbol ::sequential]"
-        (is (sut/pass? (sut/compare 'a (list 'a simple-symbol?))))
-        (is (sut/fail? (sut/compare 'a/b (list 'a/b simple-symbol?))))
-        (is (sut/pass? (sut/compare 'a (vector 'a simple-symbol?))))
-        (is (sut/fail? (sut/compare 'a/b (vector 'a/b simple-symbol?)))))
+        (is (every? sut/pass? (sut/compare 'a (list 'a simple-symbol?))))
+        (is (some sut/fail? (sut/compare 'a/b (list 'a/b simple-symbol?))))
+        (is (every? sut/pass? (sut/compare 'a (vector 'a simple-symbol?))))
+        (is (some sut/fail? (sut/compare 'a/b (vector 'a/b simple-symbol?)))))
 
       (testing "[::symbol _]"
         (is (->> [nil 1 1.0 #?(:clj 1/2) true false \a 'a/b :a :a/b]
@@ -234,10 +234,10 @@
         (is (sut/fail? (sut/compare :a/b simple-keyword?))))
 
       (testing "[::keyword ::sequential]"
-        (is (sut/pass? (sut/compare :a (list :a simple-keyword?))))
-        (is (sut/fail? (sut/compare :a/b (list :a/b simple-keyword?))))
-        (is (sut/pass? (sut/compare :a (vector :a simple-keyword?))))
-        (is (sut/fail? (sut/compare :a/b (vector :a/b simple-keyword?)))))
+        (is (every? sut/pass? (sut/compare :a (list :a simple-keyword?))))
+        (is (some sut/fail? (sut/compare :a/b (list :a/b simple-keyword?))))
+        (is (every? sut/pass? (sut/compare :a (vector :a simple-keyword?))))
+        (is (some sut/fail? (sut/compare :a/b (vector :a/b simple-keyword?)))))
 
       (testing "[::keyword _]"
         (is (->> [nil 1 1.0 #?(:clj 1/2) true false \a 'a 'a/b :a/b]

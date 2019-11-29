@@ -26,17 +26,6 @@
 
 
 
-(defn fail [actual predicate]
-  {:actual actual :expected predicate})
-
-(defn pass? [x]
-  (nil? x))
-
-(defn fail? [x]
-  (some? x))
-
-
-
 (defn get-type [x]
   (cond
     (nil? x) ::nil
@@ -56,6 +45,25 @@
 
 
 
+(defn pass [actual predicate]
+  {:type     :pass
+   :expected predicate
+   :actual   actual})
+
+(defn pass? [x]
+  (= :pass (:type x)))
+
+
+(defn fail [actual predicate]
+  {:type     :fail
+   :expected predicate
+   :actual   actual})
+
+(defn fail? [x]
+  (= :fail (:type x)))
+
+
+
 (declare compare)
 
 (defn compare-all [actual predicates]
@@ -64,10 +72,9 @@
       (fn [idx predicate]
         [idx predicate]))
     (reduce
-      (fn [errors [idx predicate]]
-        (if-some [error (compare actual predicate)]
-          (conj errors (assoc error :path [idx]))
-          errors))
+      (fn [acc [idx predicate]]
+        (let [res (compare actual predicate)]
+          (conj acc (assoc res :path [idx]))))
       [])))
 
 
@@ -85,24 +92,25 @@
 
 (defmethod compare ::default
   [actual predicate]
-  (when-not (= actual predicate)
-    (fail actual predicate)))
+  (if-not (= actual predicate)
+    (fail actual predicate)
+    (pass actual predicate)))
 
 
 (defmethod compare ::function
   [actual predicate]
-  (when-not (and (boolean (predicate actual)) true)
-    (fail actual `(~'not ~actual))))
+  (if-not (and (boolean (predicate actual)) true)
+    (fail actual predicate)
+    (pass actual predicate)))
 
 
 (defmethod compare ::sequential
   [actual predicates]
-  (let [errors (compare-all actual predicates)]
-    (when (seq errors)
-      errors)))
+  (compare-all actual predicates))
 
 
 (defmethod compare [::string ::regexp]
   [actual predicate]
-  (when-not (re-find predicate actual)
-    (fail actual predicate)))
+  (if-not (re-find predicate actual)
+    (fail actual predicate)
+    (pass actual predicate)))
