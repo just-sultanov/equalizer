@@ -2,6 +2,8 @@ name: deploy
 
 on:
   push:
+    branches:
+      - master
     tags:
       - '*'
 
@@ -51,7 +53,11 @@ jobs:
         run: make test
 
       - name: Upload coverage
+        uses: actions/checkout@v1
+        with:
+          ref: master
         run: curl -s https://codecov.io/bash | bash -s -- -c -F aFlag -f ./target/coverage/codecov.json
+
 
 
   deploy:
