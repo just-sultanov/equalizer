@@ -1,0 +1,30 @@
+{:paths   ["src"]
+
+ :deps    {org.clojure/clojure       {:mvn/version "1.10.1"}
+           org.clojure/clojurescript {:mvn/version "1.10.520"}}
+
+ :aliases {:repl    {:extra-deps  {nrepl            {:mvn/version "0.6.0"}
+                                   cider/piggieback {:mvn/version "0.4.2"}}
+                     :extra-paths ["dev/src"]
+                     :main-opts   ["--main" "nrepl.cmdline"
+                                   "--port" "7888"
+                                   "--middleware" "[cider.piggieback/wrap-cljs-repl]"]}
+
+           :test    {:extra-deps  {lambdaisland/kaocha           {:mvn/version "0.0-554"}
+                                   lambdaisland/kaocha-cljs      {:mvn/version "0.0-59"}
+                                   lambdaisland/kaocha-cloverage {:mvn/version "0.0-41"}}
+                     :extra-paths ["test/src"]}
+
+           :build   {:extra-deps {seancorfield/depstar {:mvn/version "0.3.4"}}
+                     :main-opts  ["--main" "hf.depstar.jar" "equalizer.jar"]}
+
+           :version {:extra-deps {com.workframe/garamond {:mvn/version "0.4.0"}}
+                     :main-opts  ["--main" "garamond.main"]}
+
+           :install {:extra-deps {deps-deploy {:mvn/version "0.0.9"}}
+                     :main-opts  ["--main" "deps-deploy.deps-deploy"
+                                  "install" "equalizer.jar"]}
+
+           :deploy  {:extra-deps {deps-deploy {:mvn/version "0.0.9"}}
+                     :main-opts  ["--main" "deps-deploy.deps-deploy"
+                                  "deploy" "equalizer.jar"]}}}
