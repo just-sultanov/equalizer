@@ -21,8 +21,10 @@
 
      :tests                              [{:id   :test/clj
                                            :type :kaocha.type/clojure.test}
-                                          {:id   :test/cljs
-                                           :type :kaocha.type/cljs}]
+                                          {:id            :test/cljs
+                                           :type          :kaocha.type/cljs
+                                           :cljs/repl-env cljs.repl.node/repl-env
+                                           :cljs/timeout  30000}]
 
      :cloverage/opts                     {:output           "target/coverage"
                                           :ns-regex         []
