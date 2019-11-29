@@ -1,11 +1,148 @@
 (ns equalizer.core-test
   (:require
-    #?(:clj  [clojure.test :refer [deftest is]]
-       :cljs [cljs.test :refer-macros [deftest is]])
+    #?(:clj  [clojure.test :refer [deftest is testing]]
+       :cljs [cljs.test :refer-macros [deftest is testing]])
     [equalizer.core :as sut]))
 
-(deftest test-square
-  (is (= 1 (sut/square 1)))
-  (is (= 4 (sut/square 2)))
-  (is (= 9 (sut/square 3)))
-  (is (= 16 (sut/square 4))))
+(deftest test-get-type
+  (testing "::nil"
+    (is (= ::sut/nil (sut/get-type nil))))
+
+
+  (testing "::boolean"
+    (is (= ::sut/boolean (sut/get-type true)))
+    (is (= ::sut/boolean (sut/get-type false))))
+
+
+  (testing "::number"
+    (is (= ::sut/number (sut/get-type 1)))
+    (is (= ::sut/number (sut/get-type 1.0)))
+    #?(:clj (is (= ::sut/number (sut/get-type 1/2)))))
+
+
+  (testing "::char"
+    (is (= ::sut/char (sut/get-type \a))))
+
+
+  (testing "::string"
+    (is (= ::sut/string (sut/get-type "abc"))))
+
+
+  (testing "::symbol"
+    (is (= ::sut/symbol (sut/get-type 'a)))
+    (is (= ::sut/symbol (sut/get-type 'a/b))))
+
+
+  (testing "::keyword"
+    (is (= ::sut/keyword (sut/get-type :a)))
+    (is (= ::sut/keyword (sut/get-type :a/b))))
+
+
+  (testing "::list"
+    (is (= ::sut/list (sut/get-type '()))))
+
+
+  (testing "::vector"
+    (is (= ::sut/vector (sut/get-type []))))
+
+
+  (testing "::set"
+    (is (= ::sut/set (sut/get-type #{}))))
+
+
+  (testing "::map"
+    (is (= ::sut/map (sut/get-type {}))))
+
+
+  (testing "::regexp"
+    (is (= ::sut/regexp (sut/get-type #"\w+"))))
+
+
+  (testing "::function"
+    (is (= ::sut/function (sut/get-type odd?)))
+    (is (= ::sut/function (sut/get-type #(some? %))))))
+
+
+
+(deftest test-compare
+  (testing "any pairs should be compared correctly"
+
+    (testing "::nil"
+      (testing "[::nil ::nil]"
+        (is (sut/pass? (sut/compare nil nil))))
+
+      (testing "[::nil ::function]"
+        (is (sut/pass? (sut/compare nil nil?)))
+        (is (sut/fail? (sut/compare nil some?))))
+
+      (testing "[::nil _]"
+        (is (->> [1 1.0 #?(:clj 1/2) true false \a "abc" 'a 'a/b :a :a/b some?]
+              (map #(sut/compare nil %))
+              (every? sut/fail?)))))
+
+
+    (testing "::boolean"
+      (testing "[::boolean ::boolean]"
+        (is (sut/pass? (sut/compare true true)))
+        (is (sut/pass? (sut/compare false false)))
+        (is (sut/fail? (sut/compare true false)))
+        (is (sut/fail? (sut/compare false true))))
+
+      (testing "[::boolean ::function]"
+        (is (sut/pass? (sut/compare true true?)))
+        (is (sut/pass? (sut/compare false false?)))
+        (is (sut/pass? (sut/compare true boolean?)))
+        (is (sut/fail? (sut/compare true false?)))
+        (is (sut/fail? (sut/compare false true?))))
+
+      (testing "[::boolean _]"
+        (is (->> [nil 1 1.0 #?(:clj 1/2) \a "abc" 'a 'a/b :a :a/b false?]
+              (map #(sut/compare true %))
+              (every? sut/fail?)))))
+
+
+    (testing "::number"
+      (testing "[::number ::number]"
+        (is (sut/pass? (sut/compare 1 1)))
+        (is (sut/pass? (sut/compare 1.0 1.0)))
+        #?(:clj (is (sut/pass? (sut/compare 1/2 1/2))))
+        #?(:clj (is (sut/fail? (sut/compare 1 1/2))))
+        #?(:clj (is (sut/fail? (sut/compare 1.0 1/2))))
+        #?(:clj (is (sut/fail? (sut/compare 1/2 1))))
+        #?(:clj (is (sut/fail? (sut/compare 1/2 1.0)))))
+
+      (testing "[::number ::function]"
+        (is (sut/pass? (sut/compare 1 pos-int?)))
+        (is (sut/pass? (sut/compare 0 zero?)))
+        (is (sut/pass? (sut/compare 1.0 float?)))
+        #?(:clj (is (sut/pass? (sut/compare 1/2 ratio?))))
+        (is (sut/fail? (sut/compare 1 neg-int?)))
+        #?(:clj (is (sut/fail? (sut/compare 1/2 neg?)))))
+
+      (testing "[::number _]"
+        (is (->> [nil #?(:clj 1/2) \a "abc" 'a 'a/b :a :a/b neg?]
+              (map #(sut/compare 1 %))
+              (every? sut/fail?)))))
+
+
+    (testing "::char"
+      (is (sut/pass? (sut/compare \a \a))))
+
+
+    (testing "::string ::string"
+      (is (sut/pass? (sut/compare "abc" "abc"))))
+
+
+    (testing "::string ::regexp"
+      (is (sut/pass? (sut/compare "abc" #"\w+")))
+      (is (sut/fail? (sut/compare "abc" #"\d+"))))
+
+
+    (testing "::symbol"
+      (is (sut/pass? (sut/compare 'a 'a)))
+      (is (sut/pass? (sut/compare 'a/b 'a/b))))
+
+
+    (testing "::keyword"
+      (is (sut/pass? (sut/compare :a :a)))
+      (is (sut/pass? (sut/compare :a/b :a/b))))))
