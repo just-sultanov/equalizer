@@ -59,9 +59,7 @@
 
 (defmethod compare ::function
   [actual predicate]
-  (when-not (and
-              (boolean (predicate actual))
-              true)
+  (when-not (and (boolean (predicate actual)) true)
     (fail actual predicate)))
 
 
