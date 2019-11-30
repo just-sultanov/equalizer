@@ -4,25 +4,16 @@
      (:import
        (java.util.regex Pattern))))
 
-(def simple-types
-  #{::nil ::boolean ::number ::char ::string ::symbol ::keyword})
+(defn by-regexp? [dt pt]
+  (and
+    (= ::string dt)
+    (= ::regexp pt)))
 
-(defn simple-type? [x]
-  (contains? simple-types x))
+(defn by-fn? [pt]
+  (= ::function pt))
 
-
-(def function-types
-  #{::function})
-
-(defn function-type? [x]
-  (contains? function-types x))
-
-
-(def sequential-types
-  #{::list ::vector})
-
-(defn sequential-type? [x]
-  (contains? sequential-types x))
+(defn by-map? [dt pt]
+  (= ::map dt pt))
 
 
 
@@ -43,21 +34,32 @@
         :cljs [(regexp? x) ::regexp])
     (fn? x) ::function))
 
+(defn get-paths [m]
+  (letfn [(walk-map [res path m]
+            (reduce-kv
+              (fn [acc k v]
+                (if (map? v)
+                  (walk-map acc (conj path k) v)
+                  (conj acc [(conj path k) v])))
+              res
+              m))]
+    (walk-map [] [] m)))
 
 
-(defn pass [actual predicate]
+
+(defn pass [data predicate]
   {:type     :pass
    :expected predicate
-   :actual   actual})
+   :actual   data})
 
 (defn pass? [x]
   (= :pass (:type x)))
 
 
-(defn fail [actual predicate]
+(defn fail [data predicate]
   {:type     :fail
    :expected predicate
-   :actual   actual})
+   :actual   data})
 
 (defn fail? [x]
   (= :fail (:type x)))
@@ -66,51 +68,53 @@
 
 (declare compare)
 
-(defn compare-all [actual predicates]
-  (->> predicates
-    (map-indexed
-      (fn [idx predicate]
-        [idx predicate]))
-    (reduce
-      (fn [acc [idx predicate]]
-        (let [res (compare actual predicate)]
-          (conj acc (assoc res :path [idx]))))
-      [])))
+(defn compare-map [data predicate]
+  (let [paths (get-paths predicate)]
+    (reduce (fn [acc [path p]]
+              (let [v   (get-in data path)
+                    res (compare v p)]
+                (conj acc (assoc res :path path))))
+      []
+      paths)))
 
 
 
 (defmulti compare
-  (fn [actual predicate]
-    (let [actual-type    (get-type actual)
-          predicate-type (get-type predicate)]
+  (fn [data predicate]
+    (let [dt (get-type data)
+          pt (get-type predicate)]
       (cond
-        (simple-type? predicate-type) ::equality
-        (sequential-type? predicate-type) ::sequential
-        (function-type? predicate-type) ::function
-        :else [actual-type predicate-type]))))
+        (by-map? dt pt) ::map
+        (by-regexp? dt pt) ::regexp
+        (by-fn? pt) ::function
+        :else ::equality))))
 
 
 (defmethod compare ::equality
-  [actual predicate]
-  (if-not (= actual predicate)
-    (fail actual predicate)
-    (pass actual predicate)))
+  [data predicate]
+  (if (= data predicate)
+    (pass data predicate)
+    (fail data predicate)))
+
+
+(defmethod compare ::map
+  [data predicate]
+  (if (= data predicate)
+    (pass data predicate)
+    (if (seq predicate)
+      (compare-map data predicate)
+      (fail data predicate))))
+
+
+(defmethod compare ::regexp
+  [data predicate]
+  (if (re-find predicate data)
+    (pass data predicate)
+    (fail data predicate)))
 
 
 (defmethod compare ::function
-  [actual predicate]
-  (if-not (and (boolean (predicate actual)) true)
-    (fail actual predicate)
-    (pass actual predicate)))
-
-
-(defmethod compare ::sequential
-  [actual predicates]
-  (compare-all actual predicates))
-
-
-(defmethod compare [::string ::regexp]
-  [actual predicate]
-  (if-not (re-find predicate actual)
-    (fail actual predicate)
-    (pass actual predicate)))
+  [data predicate]
+  (if (predicate data)
+    (pass data predicate)
+    (fail data predicate)))
