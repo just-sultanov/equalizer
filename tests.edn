@@ -12,7 +12,6 @@
      :plugins                            [:kaocha.plugin/randomize
                                           :kaocha.plugin/filter
                                           :kaocha.plugin/capture-output
-                                          :kaocha.plugin/profiling
                                           :kaocha.plugin/cloverage
                                           :kaocha.plugin/print-invocations
                                           :kaocha.plugin/hooks
@@ -24,7 +23,7 @@
                                           {:id            :test/cljs
                                            :type          :kaocha.type/cljs
                                            :cljs/repl-env cljs.repl.node/repl-env
-                                           :cljs/timeout  30000}]
+                                           :cljs/timeout  60000}]
 
      :cloverage/opts                     {:output           "target/coverage"
                                           :ns-regex         []
