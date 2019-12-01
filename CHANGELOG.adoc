@@ -1,5 +1,9 @@
 == Changelog
 
+=== v0.0.8
+
+* fixed pass check condition
+
 === v0.0.7
 
 * added sets comparing
