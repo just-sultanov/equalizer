@@ -239,7 +239,7 @@
         (is (sut/pass? (sut/compare '() empty?)))
         (is (sut/fail? (sut/compare '() nil?)))
         (is (sut/fail? (sut/compare '() not-empty)))
-        (is (sut/pass? (sut/compare '(1 2 3 4 5) '(#(= 1 %) number? odd? #{4} #{7 5 3}))))
+        (is (sut/pass? (sut/compare '(1 2 3 4 5) (list #(= 1 %) number? odd? #{4} #{7 5 3}))))
         (is (sut/pass? (sut/compare '(1 2 3 4 5) [#(= 1 %) number? odd? #{4} #{7 5 3}])))
         (is (sut/fail? (sut/compare '(1 2 3 4 5) [#(= 1 %) number? even?]))))
 
@@ -264,7 +264,7 @@
         (is (sut/pass? (sut/compare [] empty?)))
         (is (sut/fail? (sut/compare [] nil?)))
         (is (sut/fail? (sut/compare [] not-empty)))
-        (is (sut/pass? (sut/compare [1 2 3 4 5] '(#(= 1 %) number? odd? #{4} #{7 5 3}))))
+        (is (sut/pass? (sut/compare [1 2 3 4 5] (list #(= 1 %) number? odd? #{4} #{7 5 3}))))
         (is (sut/pass? (sut/compare [1 2 3 4 5] [#(= 1 %) number? odd? #{4} #{7 5 3}])))
         (is (sut/fail? (sut/compare [1 2 3 4 5] [#(= 1 %) number? even?]))))
 

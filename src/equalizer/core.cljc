@@ -82,7 +82,7 @@
    :predicate predicate})
 
 (defn pass? [x]
-  (boolean (some #(= :pass (:type %)) x)))
+  (every? #(= :pass (:type %)) x))
 
 
 
