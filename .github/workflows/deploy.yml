@@ -20,8 +20,6 @@ jobs:
   test:
     needs: lint
     runs-on: ubuntu-latest
-    env:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:
       - name: Git checkout
         uses: actions/checkout@v1
@@ -52,8 +50,11 @@ jobs:
       - name: Run tests
         run: make test
 
-      - name: Upload coverage
-        run: curl -s https://codecov.io/bash | bash -s -- -c -F aFlag -f ./target/coverage/codecov.json
+      - name: Upload coverage to codecov
+        uses: codecov/codecov-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./target/coverage/codecov.json
 
 
 
