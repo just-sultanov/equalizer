@@ -330,13 +330,13 @@
              :data      1,
              :predicate #?(:clj  'clojure.core/odd?
                            :cljs 'cljs.core/odd?),
-             :path      '(:a :b :c :d :e)}]
+             :path      [:a :b :c :d :e]}]
           (sut/compare {:a {:b {:c {:d {:e 1}}}}} {:a {:b {:c {:d {:e odd?}}}}})))
 
-    (is (= [{:type :pass, :data 1, :predicate #{1}, :path '(0)}
-            {:type :pass, :data 2, :predicate #{2}, :path '(:a 1)}
-            {:type :pass, :data 3, :predicate #{3}, :path '(:b 0 1)}
-            {:type :pass, :data 4, :predicate #{4}, :path '(:b 1 1)}
-            {:type :pass, :data 5, :predicate #{5}, :path '(:b 2 1)}
-            {:type :pass, :data 6, :predicate #{6}, :path '(2)}]
+    (is (= [{:type :pass, :data 1, :predicate #{1}, :path [0]}
+            {:type :pass, :data 2, :predicate #{2}, :path [1 :a]}
+            {:type :pass, :data 3, :predicate #{3}, :path [1 :b 0]}
+            {:type :pass, :data 4, :predicate #{4}, :path [1 :b 1]}
+            {:type :pass, :data 5, :predicate #{5}, :path [1 :b 2]}
+            {:type :pass, :data 6, :predicate #{6}, :path [2]}]
           (sut/compare [1 {:a 2 :b [3 4 5]} 6] [#{1} {:a #{2} :b [#{3} #{4} #{5}]} #{6}])))))

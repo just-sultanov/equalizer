@@ -76,6 +76,7 @@
        (symbol $))))
 
 
+
 (defn pass [data predicate]
   {:type      :pass
    :data      data
@@ -83,7 +84,6 @@
 
 (defn pass? [x]
   (every? #(= :pass (:type %)) x))
-
 
 
 (defn fail [data predicate]
@@ -104,7 +104,7 @@
     (reduce (fn [acc [path p]]
               (let [v (get-in data path)]
                 (->> (compare v p)
-                  (mapv #(update % :path (comp flatten conj) path))
+                  (mapv #(update % :path (comp vec flatten conj) path))
                   (conj acc))))
       [])
     flatten
@@ -120,7 +120,7 @@
       (fn [acc [idx predicate]]
         (let [v (nth data idx)]
           (->> (compare v predicate)
-            (mapv #(update % :path concat [idx]))
+            (mapv #(update % :path (comp vec reverse flatten concat) [idx]))
             (conj acc))))
       [])
     flatten
