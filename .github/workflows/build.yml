@@ -44,5 +44,11 @@ jobs:
       - name: Run tests
         run: make test
 
+      - name: Upload coverage
+        uses: codecov/codecov-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./target/coverage/codecov.json
+
       - name: Run build
         run: make build
