@@ -1,5 +1,9 @@
 == Changelog
 
+=== v0.0.10
+
+* sets comparison has been changed
+
 === v0.0.9
 
 * fixed path accumulation
