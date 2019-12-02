@@ -283,7 +283,8 @@
       (testing "[::set ::set]"
         (is (sut/pass? (sut/compare #{} #{})))
         (is (sut/pass? (sut/compare #{1 2 3} #{1 2 3})))
-        (is (sut/pass? (sut/compare #{1 2} #{2 3})))
+        (is (sut/pass? (sut/compare #{1 2 3} #{1 2})))
+        (is (sut/fail? (sut/compare #{1 2} #{2 3})))
         (is (sut/fail? (sut/compare #{1 2} #{})))
         (is (sut/fail? (sut/compare #{} #{1 2 3}))))
 

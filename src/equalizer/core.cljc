@@ -129,7 +129,7 @@
 
 (defn compare-set [data predicates]
   (cond
-    (set? data) (if (seq (set/intersection predicates data))
+    (set? data) (if (set/subset? predicates data)
                   [(pass data predicates)]
                   [(fail data predicates)])
 
