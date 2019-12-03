@@ -6,7 +6,7 @@ image:https://img.shields.io/clojars/v/equalizer.svg[Clojars, link=https://cloja
 
 == equalizer
 
-Simple Clojure(Script) library for data-driven tests.
+Clojure(Script) library for data-driven tests.
 
 STATUS: Pre-alpha, in design and prototyping phase.
 
@@ -22,6 +22,125 @@ Add the following dependency in your project:
 ;; deps.edn
 {:deps {equalizer {:mvn/version "RELEASE"}}}
 
+----
+
+=== Examples
+
+The future API:
+
+[source,clojure]
+----
+(ns awesome.app-test
+  "Simple example."
+  (:require
+    [clojure.test :refer :all]
+    [equalizer.core :as eq]
+    [awesome.app :as sut]))
+
+;; old way
+(deftest test-of-user-creation-old-way
+  (testing "should be returned a created user"
+    (let [new-user {:username "john", :email "john@doe.com", :password "john"}
+          response (sut/http-post new-user)
+          status   (:status response)
+          user     (get-in response [:body :data])
+          user-id  (:id user)
+          email    (:email user)]
+      (is (= 201 status))
+      (is (uuid? user-id))
+      (is (some? (re-find #".+@.+\.com" email))))))
+
+
+;; new way
+(deftest test-of-user-creation-new-way
+  (testing "should be returned a created user"
+    (let [new-user {:username "john", :email "john@doe.com", :password "john"}
+          response (sut/http-post new-user)]
+      (eq/match response
+        {:status 201,
+         :body   {:data {:id uuid?, :email #".+@.+\.com"}}}))))
+
+----
+
+==== One predicate
+
+[source,clojure]
+----
+;; nil
+(eq/match nil nil)
+(eq/match nil nil?)
+
+;; number
+(eq/match 1 1)
+(eq/match 1 odd?)
+(eq/match 1.0 1.0)
+(eq/match 1.0 number?)
+(eq/match 1/2 1/2)
+(eq/match 1/2 ratio?) ;; clojure only
+
+;; char
+(eq/match \a \a)
+(eq/match \a char?)
+
+;; string
+(eq/match "abc" "abc")
+(eq/match "abc" string?)
+(eq/match "abc" #"\w+")
+
+;; symbol
+(eq/match 'a 'a)
+(eq/match 'a simple-symbol?)
+(eq/match 'a/b 'a/b)
+(eq/match 'a/b qualified-symbol?)
+
+;; keyword
+(eq/match :a :a)
+(eq/match :a/b :a/b)
+(eq/match :a simple-keyword?)
+(eq/match :a/b qualified-keyword?)
+
+;; list
+(eq/match '() '())
+(eq/match '() list?)
+(eq/match '(1 2 3) '(1 2 3))
+(eq/match '(1 2 3) '(odd? even? odd?)) ;; compare by pairs
+(eq/match '(1 2 3) '(odd? #{2 4 8} odd?))
+
+;; vector
+(eq/match [] [])
+(eq/match [] vector?)
+(eq/match [1 2 3] [1 2 3])
+(eq/match [1 2 3] [odd? even? odd?])
+(eq/match [1 2 3] [odd? #{2 4 8} odd?])
+
+;; set
+(eq/match #{} #{})
+(eq/match #{} set?)
+(eq/match #{1 2 3} #{1 2 3})
+(eq/match #{1 2 3} #{1}) ;; subset?
+(eq/match [{:c 3} {:b 2} {:a 1}]
+  #{{:a odd?} {:b even?}}) ;; compare all elements
+
+;; map
+(eq/match {} {})
+(eq/match {} map?)
+(eq/match {:a 1} {:a 1})
+(eq/match {:a 1} {:a odd?})
+(eq/match {:a 1, :b 2, :c {:d 3, :e 4}}
+  {:a 1, :b number?, :c {:d #{3 5 7}, :e even?}})
+----
+
+==== Many predicates
+
+[source,clojure]
+----
+;; Same as with one predicate.
+
+(eq/match 1 1 odd? number?)
+
+(eq/match [{:a 1} {:b 2} {:c #uuid "cc5161ac-f57e-4e7a-9b9e-6bac0b840229"}]
+  #(= 3 (count %))
+  [{:a odd?} {:b even?} {:c uuid?}])
 ----
 
 === Development
@@ -71,6 +190,15 @@ major                          Increment major version
 install                        Install locally
 deploy                         Deploy to clojars
 ----
+
+=== Notes
+
+* Integrate with `clojure.test`, `cljs.test`
+* Write documentation
+* Write examples
+* Maybe allow the `_` character (symbol) to skip the comparison (same as in the `let` form)?
+I'll think about it.
+* Release a stable version.
 
 === License
 
