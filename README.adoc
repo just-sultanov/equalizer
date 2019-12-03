@@ -1,8 +1,9 @@
-image:https://img.shields.io/github/license/just-sultanov/equalizer[License,link=LICENSE]
-image:https://codecov.io/gh/just-sultanov/equalizer/branch/master/graph/badge.svg[Codecov,link=https://codecov.io/gh/just-sultanov/equalizer]
-image:https://github.com/just-sultanov/equalizer/workflows/build/badge.svg[Build]
-image:https://github.com/just-sultanov/equalizer/workflows/deploy/badge.svg[Deploy]
-image:https://img.shields.io/clojars/v/equalizer.svg[Clojars, link=https://clojars.org/equalizer]
+image:https://img.shields.io/github/license/just-sultanov/equalizer[license,link=LICENSE]
+image:https://codecov.io/gh/just-sultanov/equalizer/branch/master/graph/badge.svg[codecov,link=https://codecov.io/gh/just-sultanov/equalizer]
+image:https://github.com/just-sultanov/equalizer/workflows/build/badge.svg[build]
+image:https://github.com/just-sultanov/equalizer/workflows/deploy/badge.svg[deploy]
+image:https://img.shields.io/clojars/v/equalizer.svg[clojars, link=https://clojars.org/equalizer]
+image:https://cljdoc.org/badge/equalizer/equalizer[cljdoc, link=https://cljdoc.org/d/equalizer/equalizer/CURRENT]
 
 == equalizer
 
