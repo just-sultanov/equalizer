@@ -76,7 +76,8 @@
 
       (testing "[::nil ::function]"
         (is (sut/pass? (sut/compare nil nil?)))
-        (is (sut/fail? (sut/compare nil some?))))
+        (is (sut/fail? (sut/compare nil some?)))
+        (is (sut/fail? (sut/compare nil odd?))))
 
       (testing "[::nil ::set]"
         (is (sut/pass? (sut/compare nil #{nil})))
@@ -232,7 +233,9 @@
     (testing "compare ::list"
       (testing "[::list ::list]"
         (is (sut/pass? (sut/compare '() '())))
-        (is (sut/pass? (sut/compare '(1 2 3) '(1 2 3)))))
+        (is (sut/pass? (sut/compare '(1 2 3) '(1 2 3))))
+        (is (sut/pass? (sut/compare (list nil nil nil) (list nil))))
+        (is (sut/fail? (sut/compare (list nil) (list nil nil nil)))))
 
       (testing "[::list ::function]"
         (is (sut/pass? (sut/compare '() list?)))
@@ -245,8 +248,14 @@
 
       (testing "[::list ::set]"
         (is (sut/fail? (sut/compare '() #{})))
-        (is (sut/fail? (sut/compare '(1) #{1})))
-        (is (sut/pass? (sut/compare '(1) #{'(1)}))))
+        (is (sut/fail? (sut/compare '() #{1})))
+        (is (sut/pass? (sut/compare '(1) #{1})))
+        (is (sut/pass? (sut/compare '(1) #{'(1)})))
+        (is (sut/pass? (sut/compare '(1 2 3 4 5) #{1 3 5})))
+        (is (sut/fail? (sut/compare '(1 2 3 4 5) #{1 2 6})))
+        (is (sut/pass? (sut/compare '({:c 3} {:b 2} {:a 1}) #{{:a odd?} {:b even?}})))
+        (is (sut/pass? (sut/compare '({:c 3} {:b 2} {:a 1}) #{{:d nil?}})))
+        (is (sut/fail? (sut/compare '({:c 3} {:b 2} {:a 1}) #{{:d #{1 2 3}}}))))
 
       (testing "[::list ::any]"
         (is (->> [nil 1 1.0 #?(:clj 1/2) true false \a "abc" #"\w+" 'a 'a/b :a :a/b '() [] {}]
@@ -257,7 +266,8 @@
     (testing "compare ::vector"
       (testing "[::vector ::vector]"
         (is (sut/pass? (sut/compare [] [])))
-        (is (sut/pass? (sut/compare [1 2 3] [1 2 3]))))
+        (is (sut/pass? (sut/compare [1 2 3] [1 2 3])))
+        (is (sut/fail? (sut/compare [nil nil] [nil nil nil]))))
 
       (testing "[::vector ::function]"
         (is (sut/pass? (sut/compare [] vector?)))
@@ -266,12 +276,20 @@
         (is (sut/fail? (sut/compare [] not-empty)))
         (is (sut/pass? (sut/compare [1 2 3 4 5] (list #(= 1 %) number? odd? #{4} #{7 5 3}))))
         (is (sut/pass? (sut/compare [1 2 3 4 5] [#(= 1 %) number? odd? #{4} #{7 5 3}])))
-        (is (sut/fail? (sut/compare [1 2 3 4 5] [#(= 1 %) number? even?]))))
+        (is (sut/fail? (sut/compare [1 2 3 4 5] [#(= 1 %) number? even?])))
+        (is (sut/pass? (sut/compare [{:a 1} {:b 2}] #(= 2 (count %)))))
+        (is (sut/pass? (sut/compare [{:a 1} {:b 2}] [{:a odd?} {:b even?}]))))
 
       (testing "[::vector ::set]"
         (is (sut/fail? (sut/compare [] #{})))
         (is (sut/fail? (sut/compare [] #{1})))
-        (is (sut/pass? (sut/compare [1] #{[1]}))))
+        (is (sut/pass? (sut/compare [1] #{1})))
+        (is (sut/pass? (sut/compare [1] #{[1]})))
+        (is (sut/pass? (sut/compare [1 2 3 4 5] #{1 3 5})))
+        (is (sut/fail? (sut/compare [1 2 3 4 5] #{1 2 6})))
+        (is (sut/pass? (sut/compare [{:c 3} {:b 2} {:a 1}] #{{:a odd?} {:b even?}})))
+        (is (sut/pass? (sut/compare [{:c 3} {:b 2} {:a 1}] #{{:d nil?}})))
+        (is (sut/fail? (sut/compare [{:c 3} {:b 2} {:a 1}] #{{:d #{1 2 3}}}))))
 
       (testing "[::vector ::any]"
         (is (->> [nil 1 1.0 #?(:clj 1/2) true false \a "abc" #"\w+" 'a 'a/b :a :a/b '() [] {}]
@@ -304,7 +322,9 @@
     (testing "compare ::map"
       (testing "[::map ::map]"
         (is (sut/pass? (sut/compare {} {})))
-        (is (sut/pass? (sut/compare {:a 1, :b 2} {:a 1, :b 2}))))
+        (is (sut/pass? (sut/compare {:a 1, :b 2} {:a 1, :b 2})))
+        (is (sut/fail? (sut/compare {} {:a 1})))
+        (is (sut/fail? (sut/compare {:a 1} {:b 2}))))
 
       (testing "[::map ::function]"
         (is (sut/pass? (sut/compare {} map?)))
@@ -313,6 +333,7 @@
         (is (sut/fail? (sut/compare {} not-empty)))
         (is (sut/pass? (sut/compare {:a 1, :b 2} {:b 2})))
         (is (sut/pass? (sut/compare {:a 1, :b 2, :c {:d 3, :e 4}} {:a 1, :b number?, :c {:d #{3 5 7}, :e even?}})))
+        (is (sut/fail? (sut/compare {:a 1, :b 2, :c {:d 3, :e 4}} {:a 1, :b number?, :c {:d #{3 5 7}, :e odd?}})))
         (is (sut/fail? (sut/compare {:a 1, :b 2} {:a 1, :c number?}))))
 
       (testing "[::map ::set]"
@@ -327,17 +348,18 @@
 
 (deftest test-correct-paths
   (testing "should be returned correctly paths"
-    (is (= [{:type      :pass,
-             :data      1,
-             :predicate #?(:clj  'clojure.core/odd?
-                           :cljs 'cljs.core/odd?),
-             :path      [:a :b :c :d :e]}]
+    (is (= [{:type     :pass,
+             :actual   1,
+             :expected #?(:clj  'clojure.core/odd?
+                          :cljs 'cljs.core/odd?),
+             :path     [:a :b :c :d :e],
+             :message  "The `data` satisfies by `function`"}]
           (sut/compare {:a {:b {:c {:d {:e 1}}}}} {:a {:b {:c {:d {:e odd?}}}}})))
 
-    (is (= [{:type :pass, :data 1, :predicate #{1}, :path [0]}
-            {:type :pass, :data 2, :predicate #{2}, :path [1 :a]}
-            {:type :pass, :data 3, :predicate #{3}, :path [1 :b 0]}
-            {:type :pass, :data 4, :predicate #{4}, :path [1 :b 1]}
-            {:type :pass, :data 5, :predicate #{5}, :path [1 :b 2]}
-            {:type :pass, :data 6, :predicate #{6}, :path [2]}]
+    (is (= [{:type :pass, :actual 1, :expected #{1}, :path [0], :message "The `data` contains in `predicate`"}
+            {:type :pass, :actual 2, :expected #{2}, :path [1 :a], :message "The `data` contains in `predicate`"}
+            {:type :pass, :actual 3, :expected #{3}, :path [1 :b 0], :message "The `data` contains in `predicate`"}
+            {:type :pass, :actual 4, :expected #{4}, :path [1 :b 1], :message "The `data` contains in `predicate`"}
+            {:type :pass, :actual 5, :expected #{5}, :path [1 :b 2], :message "The `data` contains in `predicate`"}
+            {:type :pass, :actual 6, :expected #{6}, :path [2], :message "The `data` contains in `predicate`"}]
           (sut/compare [1 {:a 2 :b [3 4 5]} 6] [#{1} {:a #{2} :b [#{3} #{4} #{5}]} #{6}])))))
