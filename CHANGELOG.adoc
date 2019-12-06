@@ -1,5 +1,9 @@
 == Changelog
 
+=== v0.1.2
+
+* fixed fails filtering
+
 === v0.1.1
 
 * changed final report
