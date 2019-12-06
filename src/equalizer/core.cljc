@@ -1,13 +1,22 @@
 (ns equalizer.core
-  (:refer-clojure :exclude [compare])
+  (:refer-clojure :exclude [compare format])
   (:require
     [clojure.set :as set]
     [clojure.walk :as walk]
-    #?@(:clj  [[clojure.main :refer [demunge]]]
-        :cljs [[clojure.string :as str]]))
+    #?@(:clj  [[clojure.core :as c]
+               [clojure.main :refer [demunge]]
+               [clojure.test]]
+        :cljs [[clojure.string :as str]
+               [cljs.test :include-macros true]
+               [goog.string :as gstr]
+               [goog.string.format]]))
   #?(:clj
      (:import
        (java.util.regex Pattern))))
+
+(def format
+  #?(:clj  c/format
+     :cljs gstr/format))
 
 (defn by-regexp? [dt pt]
   (and
@@ -87,10 +96,10 @@
 
 (defn pass
   [data predicate message]
-  {:type     :pass
-   :actual   data
-   :expected (walk-form predicate)
-   :message  message})
+  {:type      :pass
+   :data      data
+   :predicate (walk-form predicate)
+   :message   message})
 
 (defn pass? [x]
   (every? #(= :pass (:type %)) x))
@@ -101,15 +110,15 @@
 
 (defn fail
   ([data predicate message]
-   {:type     :fail
-    :actual   data
-    :expected (walk-form predicate)
-    :message  message})
+   {:type      :fail
+    :data      data
+    :predicate (walk-form predicate)
+    :message   message})
   ([type data predicate message]
-   {:type     type
-    :actual   data
-    :expected (walk-form predicate)
-    :message  message}))
+   {:type      type
+    :data      data
+    :predicate (walk-form predicate)
+    :message   message}))
 
 (defn fail? [x]
   (boolean (some #(contains? #{:fail :error} (:type %)) x)))
@@ -256,3 +265,57 @@
       [(fail data predicate "The `string` isn't satisfies by `regexp`")])
     (catch #?@(:clj [Throwable e] :cljs [js/Error e])
            [(fail :error data predicate (ex-message e))])))
+
+
+
+;;
+;; helpers
+;;
+
+(defn report [[idx m]]
+  (println (format "[%s] %s:" (inc idx) (name (:type m))))
+  (when-let [message (:message m)]
+    (println (format "message:   %s" message)))
+  (println (format "data:      %s" (pr-str (:data m))))
+  (println (format "predicate: %s" (pr-str (:predicate m))))
+  (when-let [path (:path m)]
+    (println (format "path:      %s" (pr-str path)))))
+
+(defn report! [args]
+  (->> args
+    (map-indexed
+      (fn [idx predicate]
+        [idx predicate]))
+    (run! #(report %))))
+
+(defn cljs-env? [env]
+  (boolean (:ns env)))
+
+(defmacro if-cljs [then else]
+  (if (cljs-env? &env) then else))
+
+(defmacro is [& args]
+  `(if-cljs
+     (cljs.test/is ~@args)
+     (clojure.test/is ~@args)))
+
+
+
+;;
+;; public api
+;;
+
+(defmacro match [data & predicates]
+  `(let [data#       ~data
+         predicates# [~@predicates]
+         res#        (->> predicates#
+                       (map #(compare data# %))
+                       concat
+                       flatten)]
+     (if (pass? res#)
+       (is true)
+       (let [fails#   (filter #(= :fail (:type %)) res#)
+             reports# (report! fails#)]
+         (println "-- report: ---------------------------------------------------")
+         (is false reports#)
+         (println "--------------------------------------------------------------")))))

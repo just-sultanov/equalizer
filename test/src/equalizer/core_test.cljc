@@ -348,18 +348,92 @@
 
 (deftest test-correct-paths
   (testing "should be returned correctly paths"
-    (is (= [{:type     :pass,
-             :actual   1,
-             :expected #?(:clj  'clojure.core/odd?
-                          :cljs 'cljs.core/odd?),
-             :path     [:a :b :c :d :e],
-             :message  "The `data` satisfies by `function`"}]
+    (is (= [{:type      :pass,
+             :data      1,
+             :predicate #?(:clj  'clojure.core/odd?
+                           :cljs 'cljs.core/odd?),
+             :path      [:a :b :c :d :e],
+             :message   "The `data` satisfies by `function`"}]
           (sut/compare {:a {:b {:c {:d {:e 1}}}}} {:a {:b {:c {:d {:e odd?}}}}})))
 
-    (is (= [{:type :pass, :actual 1, :expected #{1}, :path [0], :message "The `data` contains in `predicate`"}
-            {:type :pass, :actual 2, :expected #{2}, :path [1 :a], :message "The `data` contains in `predicate`"}
-            {:type :pass, :actual 3, :expected #{3}, :path [1 :b 0], :message "The `data` contains in `predicate`"}
-            {:type :pass, :actual 4, :expected #{4}, :path [1 :b 1], :message "The `data` contains in `predicate`"}
-            {:type :pass, :actual 5, :expected #{5}, :path [1 :b 2], :message "The `data` contains in `predicate`"}
-            {:type :pass, :actual 6, :expected #{6}, :path [2], :message "The `data` contains in `predicate`"}]
+    (is (= [{:type :pass, :data 1, :predicate #{1}, :path [0], :message "The `data` contains in `predicate`"}
+            {:type :pass, :data 2, :predicate #{2}, :path [1 :a], :message "The `data` contains in `predicate`"}
+            {:type :pass, :data 3, :predicate #{3}, :path [1 :b 0], :message "The `data` contains in `predicate`"}
+            {:type :pass, :data 4, :predicate #{4}, :path [1 :b 1], :message "The `data` contains in `predicate`"}
+            {:type :pass, :data 5, :predicate #{5}, :path [1 :b 2], :message "The `data` contains in `predicate`"}
+            {:type :pass, :data 6, :predicate #{6}, :path [2], :message "The `data` contains in `predicate`"}]
           (sut/compare [1 {:a 2 :b [3 4 5]} 6] [#{1} {:a #{2} :b [#{3} #{4} #{5}]} #{6}])))))
+
+
+(deftest test-match
+  (testing "all tests should be pass"
+    ;; nil
+    (sut/match nil nil)
+    (sut/match nil nil?)
+
+    ;; number
+    (sut/match 1 1)
+    (sut/match 1 odd?)
+    (sut/match 1.0 1.0)
+    (sut/match 1.0 number?)
+    #?(:clj (sut/match 1/2 1/2))
+    #?(:clj (sut/match 1/2 ratio?))
+
+    ;; char
+    (sut/match \a \a)
+    (sut/match \a char?)
+
+    ;; string
+    (sut/match "abc" "abc")
+    (sut/match "abc" string?)
+    (sut/match "abc" #"\w+")
+
+    ;; symbol
+    (sut/match 'a 'a)
+    (sut/match 'a simple-symbol?)
+    (sut/match 'a/b 'a/b)
+    (sut/match 'a/b qualified-symbol?)
+
+    ;; keyword
+    (sut/match :a :a)
+    (sut/match :a/b :a/b)
+    (sut/match :a simple-keyword?)
+    (sut/match :a/b qualified-keyword?)
+
+    ;; list
+    (sut/match '() '())
+    (sut/match '() list?)
+    (sut/match '(1 2 3) '(1 2 3))
+    (sut/match '(1 2 3) (list odd? even? odd?))
+    (sut/match '(1 2 3) (list odd? #{2 4 8} odd?))
+
+    ;; vector
+    (sut/match [] [])
+    (sut/match [] vector?)
+    (sut/match [1 2 3] [1 2 3])
+    (sut/match [1 2 3] [odd? even? odd?])
+    (sut/match [1 2 3] [odd? #{2 4 8} odd?])
+
+    ;; set
+    (sut/match #{} #{})
+    (sut/match #{} set?)
+    (sut/match #{1 2 3} #{1 2 3})
+    (sut/match #{1 2 3} #{1})
+    (sut/match [{:c 3} {:b 2} {:a 1}]
+      #{{:a odd?} {:b even?}})
+
+    ;; map
+    (sut/match {} {})
+    (sut/match {} map?)
+    (sut/match {:a 1} {:a 1})
+    (sut/match {:a 1} {:a odd?})
+    (sut/match {:a 1, :b 2, :c {:d 3, :e 4}}
+      {:a 1, :b number?, :c {:d #{3 5 7}, :e even?}})
+
+    ;; many predicates
+    (sut/match 1
+      1 number? odd? some?)
+    (sut/match [{:a 1} {:b 2} {:c #uuid "cc5161ac-f57e-4e7a-9b9e-6bac0b840229"}]
+      #(= 3 (count %))
+      [{:a odd?} {:b even?} {:c uuid?}]
+      #{{:a odd?} {:b even?}})))
