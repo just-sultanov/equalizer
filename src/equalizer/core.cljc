@@ -282,11 +282,13 @@
     (println (format "path:      %s" (pr-str path)))))
 
 (defn report! [args]
+  (println "-- report: ---------------------------------------------------")
   (->> args
     (map-indexed
       (fn [idx predicate]
         [idx predicate]))
-    (run! #(report %))))
+    (run! #(report %)))
+  (println "--------------------------------------------------------------"))
 
 (defn cljs-env? [env]
   (boolean (:ns env)))
@@ -316,6 +318,4 @@
        (is true)
        (let [fails#   (filter #(= :fail (:type %)) res#)
              reports# (report! fails#)]
-         (println "-- report: ---------------------------------------------------")
-         (is false reports#)
-         (println "--------------------------------------------------------------")))))
+         (is false reports#)))))
