@@ -33,13 +33,13 @@ Add the following dependency in your project:
   "Simple example."
   (:require
     [clojure.test :refer :all]
-    #?@(:clj [equalizer.core :as eq]
-        :cljs [equalizer.core :as eq :include-macros true])
+    #?(:clj  [equalizer.core :as eq]
+       :cljs [equalizer.core :as eq :include-macros true])
     [awesome.app :as sut]))
 
 ;; old way
 (deftest test-old-way
-  (testing "should be returned a created user"
+  (testing "should return a created user"
     (let [new-user {:username "john", :email "john@doe.com", :password "secret"}
           response (sut/http-post new-user)
           status   (:status response)
@@ -53,7 +53,7 @@ Add the following dependency in your project:
 
 ;; new way
 (deftest test-new-way
-  (testing "should be returned a created user"
+  (testing "should return a created user"
     (let [new-user {:username "john", :email "john@doe.com", :password "secret"}
           response (sut/http-post new-user)]
       (eq/match response
@@ -144,7 +144,7 @@ Add the following dependency in your project:
   [{:a odd?} {:b even?} {:c uuid?}])
 ----
 
-=== Notes
+=== Notes (Roadmap)
 
 * Write documentation in source code
 * Improve integration with `clojure.test`, `cljs.test`
@@ -201,6 +201,9 @@ Improve performance:
 ;;    - :spec1
 ;;    - :spec2
 ;;    - :malli
+
+;; override global configuration
+(eq/configure! opts)
 
 ;; for spec1 and spec2
 (eq/configure! {:fail-fast? false, :providers #{:spec1 :spec2}})
