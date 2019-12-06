@@ -316,6 +316,6 @@
                        flatten)]
      (if (pass? res#)
        (is true)
-       (let [fails#   (filter #(= :fail (:type %)) res#)
+       (let [fails#   (filter fail? res#)
              reports# (report! fails#)]
          (is false reports#)))))
