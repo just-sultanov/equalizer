@@ -9,8 +9,6 @@ image:https://cljdoc.org/badge/equalizer/equalizer[cljdoc, link=https://cljdoc.o
 
 Clojure(Script) library for data-driven tests.
 
-STATUS: Pre-alpha, in design and prototyping phase.
-
 === Quick Start Guide
 
 Add the following dependency in your project:
@@ -27,7 +25,7 @@ Add the following dependency in your project:
 
 === Examples
 
-The future API:
+==== Test case
 
 [source,clojure]
 ----
@@ -35,13 +33,14 @@ The future API:
   "Simple example."
   (:require
     [clojure.test :refer :all]
-    [equalizer.core :as eq]
+    #?@(:clj [equalizer.core :as eq]
+        :cljs [equalizer.core :as eq :include-macros true])
     [awesome.app :as sut]))
 
 ;; old way
-(deftest test-of-user-creation-old-way
+(deftest test-old-way
   (testing "should be returned a created user"
-    (let [new-user {:username "john", :email "john@doe.com", :password "john"}
+    (let [new-user {:username "john", :email "john@doe.com", :password "secret"}
           response (sut/http-post new-user)
           status   (:status response)
           user     (get-in response [:body :data])
@@ -53,9 +52,9 @@ The future API:
 
 
 ;; new way
-(deftest test-of-user-creation-new-way
+(deftest test-new-way
   (testing "should be returned a created user"
-    (let [new-user {:username "john", :email "john@doe.com", :password "john"}
+    (let [new-user {:username "john", :email "john@doe.com", :password "secret"}
           response (sut/http-post new-user)]
       (eq/match response
         {:status 201,
@@ -104,8 +103,8 @@ The future API:
 (eq/match '() '())
 (eq/match '() list?)
 (eq/match '(1 2 3) '(1 2 3))
-(eq/match '(1 2 3) '(odd? even? odd?)) ;; compare by pairs
-(eq/match '(1 2 3) '(odd? #{2 4 8} odd?))
+(eq/match '(1 2 3) (list odd? even? odd?)) ;; compare by pairs
+(eq/match '(1 2 3) (list odd? #{2 4 8} odd?))
 
 ;; vector
 (eq/match [] [])
@@ -137,11 +136,94 @@ The future API:
 ----
 ;; Same as with one predicate.
 
-(eq/match 1 1 odd? number?)
+(eq/match 1
+  1 odd? number?)
 
 (eq/match [{:a 1} {:b 2} {:c #uuid "cc5161ac-f57e-4e7a-9b9e-6bac0b840229"}]
   #(= 3 (count %))
   [{:a odd?} {:b even?} {:c uuid?}])
+----
+
+=== Notes
+
+* Write documentation in source code
+* Improve integration with `clojure.test`, `cljs.test`
+* The current API looks good.
+Improve performance:
+- rewrite all core functions, because `match` must be fast
+- maybe allow the `_` character (symbol) to skip the comparison (same as in the `let` form)?
+- add `explain` and use only when match failed?
+
+[source,clojure]
+----
+(eq/explain data predicate1 predicate2)
+----
+
+- add composable predicates something like that?
+
+[source,clojure]
+----
+;; and
+(eq/match data
+  (eq/and predicate1 predicate2))
+
+;; or
+(eq/match data
+  (eq/or
+    (eq/and predicate1 predicate2)
+    predicate3))
+
+;; not
+(eq/match data
+  (eq/or
+    (eq/and predicate1 predicate2)
+    (eq/not predicate3)
+    predicate4))
+----
+
+- add `inferred` predicates?
+
+[source,clojure]
+----
+(eq/provide {:a 1})
+;; => {:a int?}
+----
+
+- add opts to `match`:
+
+[source,clojure]
+----
+;; opts:
+;; 1. :fail-fast?
+;;    - true/false (by default - `true` for performance)
+;; 2. :providers
+;;    - :equalizer (by default)
+;;    - :spec1
+;;    - :spec2
+;;    - :malli
+
+;; for spec1 and spec2
+(eq/configure! {:fail-fast? false, :providers #{:spec1 :spec2}})
+
+(spec1/def ::id int?)
+(spec2/def ::age (spec2/and int? #(>= % 18)))
+
+(eq/match data
+  {:id ::id, :age ::age})
+
+;; or override directly
+(eq/match {:providers #{:spec1 :spec2}}
+  data
+  {:id ::id, :age ::age})
+
+;; for malli
+(eq/configure! {:fail-fast? false, :providers #{:malli}})
+
+(def id int?)
+(def age [:and int? [:>= 18]])
+
+(eq/match data
+  {:id id, :age age})
 ----
 
 === Development
@@ -191,15 +273,6 @@ major                          Increment major version
 install                        Install locally
 deploy                         Deploy to clojars
 ----
-
-=== Notes
-
-* Integrate with `clojure.test`, `cljs.test`
-* Write documentation
-* Write examples
-* Maybe allow the `_` character (symbol) to skip the comparison (same as in the `let` form)?
-I'll think about it.
-* Release a stable version.
 
 === License
 
