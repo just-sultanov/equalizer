@@ -121,7 +121,8 @@
     :message   message}))
 
 (defn fail? [x]
-  (boolean (some #(contains? #{:fail :error} (:type %)) x)))
+  (let [x (if (map? x) [x] x)]
+    (boolean (some #(contains? #{:fail :error} (:type %)) x))))
 
 
 
@@ -272,23 +273,23 @@
 ;; helpers
 ;;
 
-(defn report [[idx m]]
-  (println (format "[%s] %s:" (inc idx) (name (:type m))))
-  (when-let [message (:message m)]
-    (println (format "message:   %s" message)))
-  (println (format "data:      %s" (pr-str (:data m))))
-  (println (format "predicate: %s" (pr-str (:predicate m))))
-  (when-let [path (:path m)]
-    (println (format "path:      %s" (pr-str path)))))
+(defn report [[idx {:keys [type message data predicate path]}]]
+  (cond-> (format "[%s] %s:\n" (inc idx) (name type))
+    (some? message) (str (format "message:   %s\n" message))
+    true (str (format "data:      %s\n" (pr-str data)))
+    true (str (format "predicate: %s\n" (pr-str predicate)))
+    (some? path) (str (format "path:      %s\n" (pr-str path)))))
 
 (defn report! [args]
-  (println "-- report: ---------------------------------------------------")
-  (->> args
-    (map-indexed
-      (fn [idx predicate]
-        [idx predicate]))
-    (run! #(report %)))
-  (println "--------------------------------------------------------------"))
+  (let [rs (->> args
+             (map-indexed
+               (fn [idx predicate]
+                 [idx predicate]))
+             (map report)
+             (interpose "\n"))]
+    (println "--- report: ---------------------------------------------------")
+    (run! print rs)
+    (println "--------------------------------------------------------------")))
 
 (defn cljs-env? [env]
   (boolean (:ns env)))
@@ -316,6 +317,6 @@
                        flatten)]
      (if (pass? res#)
        (is true)
-       (let [fails#   (filter fail? res#)
-             reports# (report! fails#)]
-         (is false reports#)))))
+       (let [fails# (filter fail? res#)]
+         (report! fails#)
+         (is false)))))
